@@ -1,0 +1,52 @@
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.vscode/
+.idea/
+
+## PHP dependencies
+vendor/
+composer.lock
+composer.phar*
+phar.phar*
+pharcommand.phar
+
+## Environment
+.env
+.env.*
+
+## Local PHP runtime and installers (keep local, don't track)
+php.ini
+php.ini-development
+php.ini-production
+php*.zip
+*.msi
+*.exe
+
+## DLLs and binary libs
+*.dll
+*.lib
+
+## Local PHP distribution folders
+ext/
+lib/
+dev/
+extras/
+php-*-Win32-*/
+php-*-x64*/
+php-8.*-Win32-*/
+php-8.*-x64*/
+
+## Archives
+*.zip
+laravel.zip
+
+## Logs
+*.log
+
+## Uploads (keep directory with .gitkeep)
+laravel-app/assets/uploads/images/*
+!laravel-app/assets/uploads/images/.gitkeep
+
