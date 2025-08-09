@@ -8,7 +8,7 @@
 if (!isset($db_config)) {
     $db_config = [
         'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
-        'port' => 3306,
+        'port' => isset($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 3306,
         'database' => $_ENV['DB_NAME'] ?? 'laravel_app',
         'username' => $_ENV['DB_USER'] ?? 'root',
         'password' => $_ENV['DB_PASS'] ?? 'nh01300130',
@@ -26,7 +26,7 @@ if (!function_exists('getDatabaseConnection')) {
         if (!isset($db_config) || !is_array($db_config)) {
             $db_config = [
                 'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
-                'port' => 3306,
+                'port' => isset($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 3306,
                 'database' => $_ENV['DB_NAME'] ?? 'laravel_app',
                 'username' => $_ENV['DB_USER'] ?? 'root',
                 'password' => $_ENV['DB_PASS'] ?? 'nh01300130',
