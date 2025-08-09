@@ -1,0 +1,4 @@
+Options -Indexes -Multiviews +FollowSymLinks
+DirectoryIndex index.php index.html
+
+

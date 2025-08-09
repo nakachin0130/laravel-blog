@@ -21,9 +21,10 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
     /etc/apache2/sites-available/default-ssl.conf || true
 
 # DirectoryIndex を明示
-RUN bash -lc 'echo "<Directory ${APACHE_DOCUMENT_ROOT}>\n    DirectoryIndex index.php index.html\n</Directory>" \
+RUN bash -lc 'echo "<Directory ${APACHE_DOCUMENT_ROOT}>\n    Options -Indexes -Multiviews +FollowSymLinks\n    AllowOverride All\n    DirectoryIndex index.php index.html\n</Directory>" \
     > /etc/apache2/conf-available/z-app-dirindex.conf' \
-    && a2enconf z-app-dirindex
+    && a2enconf z-app-dirindex \
+    && a2enmod rewrite
 
 # Apacheの設定（必要に応じて）
 EXPOSE 80
