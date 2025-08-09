@@ -3,6 +3,7 @@ FROM php:8.2-apache
 # 必要な拡張機能をインストール（pdo_mysql, mysqli, zip, curl）
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+       ca-certificates \
        libzip-dev \
        libcurl4-openssl-dev \
     && docker-php-ext-install pdo_mysql mysqli zip \
