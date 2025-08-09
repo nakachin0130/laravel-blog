@@ -14,6 +14,17 @@ RUN apt-get update \
 WORKDIR /var/www/html
 COPY . /var/www/html
 
+# ApacheのDocumentRootをアプリ配下に変更
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/laravel-app
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/000-default.conf \
+    /etc/apache2/sites-available/default-ssl.conf || true
+
+# DirectoryIndex を明示
+RUN bash -lc 'echo "<Directory ${APACHE_DOCUMENT_ROOT}>\n    DirectoryIndex index.php index.html\n</Directory>" \
+    > /etc/apache2/conf-available/z-app-dirindex.conf' \
+    && a2enconf z-app-dirindex
+
 # Apacheの設定（必要に応じて）
 EXPOSE 80
 
