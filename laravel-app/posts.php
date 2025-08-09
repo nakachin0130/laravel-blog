@@ -14,16 +14,10 @@ session_start();
 // 認証機能を読み込み
 require_once 'auth.php';
 
-// データベース設定
-$db_config = [
-    'host' => '127.0.0.1',
-    'port' => 3306,
-    'database' => 'laravel_app',
-    'username' => 'root',
-    'password' => 'nh01300130',
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci'
-];
+// クラウド/環境変数対応
+require_once 'database_config.php';
+// 共通DB接続
+$pdo = getDatabaseConnection();
 
 // 検索キーワードを取得
 $search_keyword = trim($_GET['search'] ?? '');
@@ -32,10 +26,6 @@ $error_message = '';
 
 // データベース接続
 try {
-    $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
-    $pdo = new PDO($dsn, $db_config['username'], $db_config['password']);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
     // 検索クエリを構築
     if (!empty($search_keyword)) {
         // 検索キーワードを正規化（大文字小文字を統一）
@@ -390,8 +380,12 @@ function highlightKeyword($text, $keyword) {
                     </div>
                     
                     <?php if (!empty($post['image_path'])): ?>
+                        <?php 
+                            $rawPath = $post['image_path'];
+                            $imageSrc = (preg_match('/^https?:\\/\\\//', $rawPath)) ? $rawPath : '/' . ltrim($rawPath, '/');
+                        ?>
                         <div style="margin: 15px 0; text-align: center;">
-                            <img src="/<?php echo htmlspecialchars($post['image_path']); ?>" 
+                            <img src="<?php echo htmlspecialchars($imageSrc); ?>" 
                                  alt="記事画像" 
                                  style="max-width: 100%; max-height: 200px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         </div>

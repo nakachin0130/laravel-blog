@@ -20,27 +20,17 @@ requireLogin();
 // 記事IDを取得
 $post_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// データベース設定
-$db_config = [
-    'host' => '127.0.0.1',
-    'port' => 3306,
-    'database' => 'laravel_app',
-    'username' => 'root',
-    'password' => 'nh01300130',
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci'
-];
+// クラウド/環境変数対応
+require_once 'database_config.php';
+// 共通DB接続
+$pdo = getDatabaseConnection();
 
 $message = '';
 $error_message = '';
 $post = null;
 
-// データベース接続
+// データ取得
 try {
-    $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
-    $pdo = new PDO($dsn, $db_config['username'], $db_config['password']);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
     // 記事データを取得（自分の投稿のみ）
     $query = "SELECT * FROM posts WHERE id = ? AND user_id = ?";
     $stmt = $pdo->prepare($query);

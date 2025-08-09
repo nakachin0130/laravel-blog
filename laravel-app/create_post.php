@@ -17,16 +17,11 @@ require_once 'auth.php';
 // ログインが必要
 requireLogin();
 
-// データベース設定
-$db_config = [
-    'host' => '127.0.0.1',
-    'port' => 3306,
-    'database' => 'laravel_app',
-    'username' => 'root',
-    'password' => 'nh01300130',
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci'
-];
+// クラウド/環境変数対応
+require_once 'database_config.php';
+require_once 'cloudinary_config.php';
+// 共通DB接続
+$pdo = getDatabaseConnection();
 
 $message = '';
 $error_message = '';
@@ -46,11 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error_message = '内容を入力してください。';
     } else {
         try {
-            $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
-            $pdo = new PDO($dsn, $db_config['username'], $db_config['password']);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-            // 画像パスを取得（ファイルアップロードから）
+            // 画像パスを取得（Cloudinary優先 → ローカル保存）
             $image_path = null;
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $file = $_FILES['image'];
@@ -58,30 +49,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $file_size = $file['size'];
                 $file_tmp = $file['tmp_name'];
                 $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-                
-                // 許可する画像形式
+
                 $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                
                 if (in_array($file_ext, $allowed_extensions) && $file_size <= 5 * 1024 * 1024) {
-                    // アップロードディレクトリの確認と作成
-                    $upload_dir = 'assets/uploads/images/';
-                    if (!is_dir($upload_dir)) {
-                        mkdir($upload_dir, 0755, true);
+                    // まずはCloudinaryにアップロード（環境変数が設定されている場合）
+                    $cloud = getCloudinaryConfig();
+                    $has_cloudinary = !empty($cloud['cloud_name']) && $cloud['cloud_name'] !== 'your-cloud-name'
+                        && !empty($cloud['upload_preset']) && $cloud['upload_preset'] !== 'your-upload-preset';
+
+                    if ($has_cloudinary) {
+                        $uploaded_url = uploadImageToCloudinary($file_tmp);
+                        if ($uploaded_url) {
+                            $image_path = $uploaded_url; // 絶対URL
+                        }
                     }
-                    
-                    // ユニークなファイル名を生成
-                    $timestamp = time();
-                    $random_string = bin2hex(random_bytes(8));
-                    $new_file_name = "post_{$user_id}_{$timestamp}_{$random_string}.{$file_ext}";
-                    $upload_path = $upload_dir . $new_file_name;
-                    
-                    // ファイルをアップロード
-                    if (move_uploaded_file($file_tmp, $upload_path)) {
-                        $image_path = $upload_path;
+
+                    // Cloudinary未設定 or 失敗時はローカル保存にフォールバック
+                    if ($image_path === null) {
+                        $upload_dir = 'assets/uploads/images/';
+                        if (!is_dir($upload_dir)) {
+                            mkdir($upload_dir, 0755, true);
+                        }
+                        $timestamp = time();
+                        $random_string = bin2hex(random_bytes(8));
+                        $new_file_name = "post_{$user_id}_{$timestamp}_{$random_string}.{$file_ext}";
+                        $upload_path = $upload_dir . $new_file_name;
+                        if (move_uploaded_file($file_tmp, $upload_path)) {
+                            $image_path = $upload_path; // 相対パス
+                        }
                     }
                 }
             }
-            
+
             // 記事を挿入
             $query = "INSERT INTO posts (title, content, image_path, user_id, status) VALUES (?, ?, ?, ?, ?)";
             $stmt = $pdo->prepare($query);
@@ -107,15 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ユーザー一覧を取得
+// ユーザー一覧・カテゴリ一覧を取得
 try {
-    $dsn = "mysql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['database']};charset={$db_config['charset']}";
-    $pdo = new PDO($dsn, $db_config['username'], $db_config['password']);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
     $users = $pdo->query("SELECT id, name FROM users ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
     $categories = $pdo->query("SELECT id, name FROM categories ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-    
 } catch (PDOException $e) {
     $error_message = "データベース接続エラー: " . $e->getMessage();
     $users = [];

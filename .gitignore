@@ -50,3 +50,4 @@ laravel.zip
 laravel-app/assets/uploads/images/*
 !laravel-app/assets/uploads/images/.gitkeep
 
+
